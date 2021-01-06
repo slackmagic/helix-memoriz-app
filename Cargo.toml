@@ -1,0 +1,13 @@
+[workspace]
+members = [
+    "bin/helix-memoriz-api",
+    "helix-memoriz-domain",
+]
+
+##DEFAULT RUNNING BIN
+default-members=["bin/helix-memoriz-api"]
+
+
+##__FIX FOR ARM COMPILATION SINCE RUST 1.38
+[profile.release]
+codegen-units = 1
