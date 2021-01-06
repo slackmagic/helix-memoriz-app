@@ -12,7 +12,7 @@ use helix_config_lib::Configuration as GlobalConfiguration;
 use std::sync::{Arc, Mutex};
 use std::{env, io};
 
-const APP_NAME: &str = "HELIX_API_TEMPLATE";
+const APP_NAME: &str = "MEMORIZ_APP";
 
 #[actix_rt::main]
 async fn main() -> io::Result<()> {
@@ -44,7 +44,7 @@ async fn main() -> io::Result<()> {
                 web::scope("/api")
                     .route("/_", web::get().to(healthcheck))
                     .route("/version", web::get().to(version))
-                    .service(web::scope("/").configure(get_routes_configuration)),
+                    .service(web::scope("/memoriz").configure(get_routes_configuration)),
             )
             .service(web::scope("/").configure(get_static_files_configuration))
     })
@@ -61,16 +61,45 @@ fn get_routes_configuration(cfg: &mut web::ServiceConfig) {
     //----------------------------------------------------------
     //___DOMAIN___
     //----------------------------------------------------------
-    //TODO: Adapt example.
     cfg.service(
-        web::scope("/APP_NAME")
-            .route("", web::get().to(unimplemented))
-            .route("", web::post().to(unimplemented))
-            .route("", web::put().to(unimplemented))
+        web::scope("")
             .service(
-                web::scope("/{uuid}")
+                web::scope("/entries")
                     .route("", web::get().to(unimplemented))
-                    .route("", web::delete().to(unimplemented)),
+                    .route("", web::post().to(unimplemented))
+                    .route("", web::put().to(unimplemented))
+                    .route("/search", web::get().to(unimplemented))
+                    .route("/by-board/{uuid}", web::get().to(unimplemented))
+                    .route("/by-label/{id}", web::get().to(unimplemented))
+                    .service(
+                        web::scope("/{uuid}")
+                            .route("", web::get().to(unimplemented))
+                            .route("", web::delete().to(unimplemented))
+                            .route("/do-archive", web::post().to(unimplemented))
+                            .route("/undo-archive", web::post().to(unimplemented)),
+                    ),
+            )
+            .service(
+                web::scope("/boards")
+                    .route("", web::get().to(unimplemented))
+                    .route("", web::post().to(unimplemented))
+                    .route("", web::put().to(unimplemented))
+                    .service(
+                        web::scope("/{uuid}")
+                            .route("", web::get().to(unimplemented))
+                            .route("", web::delete().to(unimplemented)),
+                    ),
+            )
+            .service(
+                web::scope("/labels")
+                    .route("", web::get().to(unimplemented))
+                    .route("", web::post().to(unimplemented))
+                    .route("", web::put().to(unimplemented))
+                    .service(
+                        web::scope("/{id}")
+                            .route("", web::get().to(unimplemented))
+                            .route("", web::delete().to(unimplemented)),
+                    ),
             ),
     );
 }

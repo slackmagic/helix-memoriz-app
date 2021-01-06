@@ -1,7 +1,7 @@
-pub struct EntryDomain {}
+pub struct MemorizDomain {}
 
-impl EntryDomain {
+impl MemorizDomain {
     pub fn new() -> Self {
-        EntryDomain {}
+        MemorizDomain {}
     }
 }

@@ -2,6 +2,7 @@
 members = [
     "bin/helix-memoriz-api",
     "helix-memoriz-domain",
+    "storage/helix-pg-db-memoriz-storage"
 ]
 
 ##DEFAULT RUNNING BIN

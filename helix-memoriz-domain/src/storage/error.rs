@@ -19,6 +19,11 @@ pub enum StorageError {
         #[from]
         source: serde_json::Error,
     },
+    #[error("Postgres error: {source}")]
+    PostGres {
+        #[from]
+        source: postgres::Error,
+    },
 }
 
 //Define a generic error type to simplify return.

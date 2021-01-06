@@ -1,22 +1,14 @@
 [package]
-name = "helix-memoriz-domain"
+name = "helix-pg-db-memoriz-storage"
 version = "0.1.0"
 authors = ["SlackMagiC <laurent.pietrzyk@gmail.com>"]
 edition = "2018"
 
-
-[lib]
-name="helix_memoriz_domain"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-## Error management
-thiserror = "1.0"
-
-##SERIALIZATION TO JSON
-serde = "1.0"
-serde_derive = "1.0"
-serde_json = "1.0"
-json = "*"
+helix-memoriz-domain = { path = "../../helix-memoriz-domain" }
+helix-db-lib = {git = "https://github.com/slackmagic/helix-shared-lib", branch = "master"}
 
 ##DATA UTILS => UTC Date, UUID generation
 uuid = { version = "0.8", features = ["v5", "serde"]}
