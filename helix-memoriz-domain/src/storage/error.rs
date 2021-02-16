@@ -24,6 +24,11 @@ pub enum StorageError {
         #[from]
         source: postgres::Error,
     },
+    #[error("Sled error: {source}")]
+    Sled {
+        #[from]
+        source: sled::Error,
+    },
 }
 
 //Define a generic error type to simplify return.
