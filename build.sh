@@ -1,0 +1,1 @@
+ docker run --volume D:\\DEV\\GIT_PROJECTS\\helix-memoriz-app:/home/cross/project ragnaroek/rust-raspberry:1.50.0 build --release
