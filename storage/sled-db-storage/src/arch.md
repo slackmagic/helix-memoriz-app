@@ -10,6 +10,11 @@
 
 ## Single BOARD tree:
 
-(K, V) = (ENTRY_ID, ENTRY_STRUCT)
+(K, V) = (COMPOUND_ID, ENTRY_STRUCT)
+
+K => (BOARD_ID):(ENTRY_ID)
+
+Permit to make range search
+for kv_result in tree.range("key_1".."key_9") {}
 
 ## Label to define

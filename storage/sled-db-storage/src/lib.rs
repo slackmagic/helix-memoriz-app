@@ -1,10 +1,15 @@
+use chrono::prelude::*;
 use helix_memoriz_domain::core::{board::*, entry::*, label::*};
 use helix_memoriz_domain::storage::error::*;
 use helix_memoriz_domain::storage::traits::StorageTrait;
+use serde_cbor::ser::to_vec;
 use sled::Db;
-use uuid;
+use uuid::Uuid;
 
 //TODO: Define const for table names
+const OWNERSHIP_TREE: &str = "OWNERSHIP";
+const BOARDS_TREE: &str = "BOARDS";
+const ENTRIES_TREE: &str = "ENTRIES";
 
 pub struct SledDbMemorizStorage {
     db: Db,
@@ -14,6 +19,10 @@ impl SledDbMemorizStorage {
     pub fn new(path: String) -> StorageResult<Self> {
         let db = sled::open(path)?;
         Ok(SledDbMemorizStorage { db })
+    }
+
+    fn generate_uuid(&self) -> Uuid {
+        Uuid::new_v5(&Uuid::NAMESPACE_URL, Utc::now().to_rfc3339().as_bytes())
     }
 }
 
@@ -25,8 +34,13 @@ impl StorageTrait for SledDbMemorizStorage {
     ) -> StorageResult<Option<Board>> {
         Err(StorageError::NotImplemented)
     }
-    fn create_board(&mut self, board: Board) -> StorageResult<Board> {
-        Err(StorageError::NotImplemented)
+
+    fn create_board(&mut self, mut board: Board) -> StorageResult<Board> {
+        let boards = self.db.open_tree(BOARDS_TREE)?;
+        board.uuid = Some(self.generate_uuid());
+
+        boards.insert(&board.uuid.unwrap().to_string(), to_vec(&board).unwrap())?;
+        Ok(board)
     }
     fn get_all_boards(&mut self, owner_uuid: uuid::Uuid) -> StorageResult<Vec<Board>> {
         self.db.open_tree("")?;
@@ -52,8 +66,13 @@ impl StorageTrait for SledDbMemorizStorage {
         Err(StorageError::NotImplemented)
     }
 
-    fn create_entry(&mut self, entry: Entry) -> StorageResult<Entry> {
-        Err(StorageError::NotImplemented)
+    fn create_entry(&mut self, mut entry: Entry) -> StorageResult<Entry> {
+        let entries = self.db.open_tree(ENTRIES_TREE)?;
+        entry.uuid = Some(self.generate_uuid());
+
+        let compound_id = &entry.uuid.unwrap().to_string();
+        entries.insert(&compound_id, to_vec(&entry).unwrap())?;
+        Ok(entry)
     }
     fn update_entry(&mut self, entry: Entry) -> StorageResult<Entry> {
         Err(StorageError::NotImplemented)
