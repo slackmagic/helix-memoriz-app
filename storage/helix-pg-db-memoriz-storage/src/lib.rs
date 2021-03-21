@@ -271,7 +271,7 @@ impl StorageTrait for PgDbMemorizStorage {
         Ok(result)
     }
 
-    fn get_all_entries(&mut self, owner_uuid: uuid::Uuid) -> StorageResult<Vec<Entry>> {
+    fn get_all_entries(&self, owner_uuid: uuid::Uuid) -> StorageResult<Vec<Entry>> {
         let mut result: Vec<Entry> = Vec::new();
 
         let query = "
