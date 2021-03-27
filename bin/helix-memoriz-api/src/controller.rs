@@ -4,8 +4,19 @@ use actix_web::web::Data;
 use actix_web::{web, HttpRequest, HttpResponse};
 use std::sync::{Arc, Mutex};
 
+#[derive(Debug, Serialize, Deserialize)]
+struct HealthCheckResponse {
+    app_name: String,
+    message: String,
+}
+
 pub fn healthcheck(_req: HttpRequest) -> HttpResponse {
-    HttpResponse::Ok().body(format!("Everything's fine on {}.", APP_NAME))
+    let message = HealthCheckResponse {
+        app_name: APP_NAME.to_string(),
+        message: "Everything's fine !".to_string(),
+    };
+
+    HttpResponse::Ok().json(message)
 }
 
 pub fn unimplemented(_req: HttpRequest) -> HttpResponse {
@@ -22,3 +33,5 @@ pub fn version(_req: HttpRequest) -> HttpResponse {
 
     HttpResponse::Ok().json(version)
 }
+
+//-----------------------------------------------------------------------------------

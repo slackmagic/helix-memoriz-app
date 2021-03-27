@@ -1,49 +1,70 @@
+use async_trait::async_trait;
 use chrono::prelude::*;
+use deadpool_postgres::{Config, ManagerConfig, Pool, RecyclingMethod};
 use helix_memoriz_domain::core::{board::*, entry::*, label::*};
 use helix_memoriz_domain::storage::error::*;
 use helix_memoriz_domain::storage::traits::StorageTrait;
-use postgres::{Client, NoTls};
+use tokio_postgres::tls::NoTls;
 use uuid;
 
 pub struct PgDbMemorizStorage {
-    pub db_conn: Client,
+    pub pool: Pool,
 }
 
 impl PgDbMemorizStorage {
-    pub fn new(conn_string: String) -> Self {
-        let t_connection: Client = Client::connect(&conn_string, NoTls).unwrap();
-        PgDbMemorizStorage {
-            db_conn: t_connection,
-        }
+    pub fn new(
+        database: String,
+        host: String,
+        port: u16,
+        user: String,
+        password: String,
+    ) -> StorageResult<PgDbMemorizStorage> {
+        let mut cfg = Config::new();
+        cfg.dbname = Some(database);
+        cfg.host = Some(host);
+        cfg.port = Some(port);
+        cfg.user = Some(user);
+        cfg.password = Some(password);
+        cfg.manager = Some(ManagerConfig {
+            recycling_method: RecyclingMethod::Fast,
+        });
+
+        Ok(PgDbMemorizStorage {
+            pool: cfg.create_pool(NoTls).unwrap(),
+        })
     }
 }
 
+#[async_trait]
 impl StorageTrait for PgDbMemorizStorage {
-    fn create_board(&mut self, mut board: Board) -> StorageResult<Board> {
+    async fn create_board(&self, mut board: Board) -> StorageResult<Board> {
         board.created_on = Some(Utc::now());
-
         let query = "
         INSERT INTO memoriz.board
         VALUES (DEFAULT,$1,$2,$3,$4,NULL,$5)
         RETURNING uuid;";
 
-        let row_inserted = &self.db_conn.query(
-            query,
-            &[
-                &board.title,
-                &board.data,
-                &board.color,
-                &board.created_on,
-                &board.owner,
-            ],
-        )?;
+        let client = self.pool.get().await.unwrap();
+
+        let row_inserted = &client
+            .query(
+                query,
+                &[
+                    &board.title,
+                    &board.data,
+                    &board.color,
+                    &board.created_on,
+                    &board.owner,
+                ],
+            )
+            .await?;
 
         let row_data = row_inserted.iter().next().unwrap();
         board.uuid = row_data.get("id");
         Ok(board)
     }
 
-    fn update_board(&mut self, mut board: Board) -> StorageResult<Board> {
+    async fn update_board(&self, mut board: Board) -> StorageResult<Board> {
         board.updated_on = Some(Utc::now());
 
         let query = "
@@ -51,22 +72,26 @@ impl StorageTrait for PgDbMemorizStorage {
         = ($2,$3,$4,$5)
         WHERE UUID = $1;";
 
-        self.db_conn.query(
-            query,
-            &[
-                &board.uuid,
-                &board.title,
-                &board.data,
-                &board.color,
-                &board.updated_on,
-            ],
-        )?;
+        let client = self.pool.get().await.unwrap();
+
+        client
+            .query(
+                query,
+                &[
+                    &board.uuid,
+                    &board.title,
+                    &board.data,
+                    &board.color,
+                    &board.updated_on,
+                ],
+            )
+            .await?;
 
         Ok(board)
     }
 
-    fn get_board(
-        &mut self,
+    async fn get_board(
+        &self,
         uuid: uuid::Uuid,
         owner_uuid: uuid::Uuid,
     ) -> StorageResult<Option<Board>> {
@@ -79,7 +104,9 @@ impl StorageTrait for PgDbMemorizStorage {
         and board.uuid = $2;
         ";
 
-        for row in &self.db_conn.query(query, &[&uuid, &owner_uuid])? {
+        let client = self.pool.get().await.unwrap();
+
+        for row in &client.query(query, &[&uuid, &owner_uuid]).await? {
             result = Some(Board::new(
                 row.get("uuid"),
                 row.get("title"),
@@ -94,7 +121,7 @@ impl StorageTrait for PgDbMemorizStorage {
         Ok(result)
     }
 
-    fn get_all_boards(&mut self, owner_uuid: uuid::Uuid) -> StorageResult<Vec<Board>> {
+    async fn get_all_boards(&self, owner_uuid: uuid::Uuid) -> StorageResult<Vec<Board>> {
         let mut result: Vec<Board> = Vec::new();
 
         let query = "
@@ -104,7 +131,9 @@ impl StorageTrait for PgDbMemorizStorage {
         order by board.updated_on desc;
         ";
 
-        for row in &self.db_conn.query(query, &[&owner_uuid])? {
+        let client = self.pool.get().await.unwrap();
+
+        for row in &client.query(query, &[&owner_uuid]).await? {
             let board: Board = Board::new(
                 row.get("uuid"),
                 row.get("title"),
@@ -121,41 +150,50 @@ impl StorageTrait for PgDbMemorizStorage {
         Ok(result)
     }
 
-    fn delete_board(&mut self, board: &Board) -> StorageResult<()> {
+    async fn delete_board(&self, board: &Board) -> StorageResult<()> {
         let query = "DELETE FROM memoriz.board WHERE UUID = $1;";
-        &self.db_conn.execute(query, &[&board.uuid])?;
+        let client = self.pool.get().await.unwrap();
+        &client.execute(query, &[&board.uuid]).await?;
         Ok(())
     }
 
-    fn create_label(&mut self, label: Label) -> StorageResult<Label> {
+    async fn create_label(&self, label: Label) -> StorageResult<Label> {
         let query = "
         INSERT INTO memoriz.label
         VALUES ($1,$2,$3);";
 
-        self.db_conn
-            .query(query, &[&label.id, &label.name, &label.description])?;
+        let client = self.pool.get().await.unwrap();
+
+        client
+            .query(query, &[&label.id, &label.name, &label.description])
+            .await?;
 
         Ok(label)
     }
 
-    fn update_label(&mut self, label: Label) -> StorageResult<Label> {
+    async fn update_label(&self, label: Label) -> StorageResult<Label> {
         let query = "
         UPDATE memoriz.label SET (name, description) 
         = ($2, $3)
         WHERE ID = $1;";
-        self.db_conn
-            .query(query, &[&label.name, &label.description])?;
+
+        let client = self.pool.get().await.unwrap();
+        client
+            .query(query, &[&label.name, &label.description])
+            .await?;
         Ok(label)
     }
 
-    fn delete_label(&mut self, label: &Label) -> StorageResult<()> {
+    async fn delete_label(&self, label: &Label) -> StorageResult<()> {
         let query = "DELETE FROM memoriz.label WHERE ID = $1;";
 
-        self.db_conn.query(query, &[&label.id])?;
+        let client = self.pool.get().await.unwrap();
+
+        client.query(query, &[&label.id]).await?;
         Ok(())
     }
 
-    fn get_all_labels(&mut self) -> StorageResult<Vec<Label>> {
+    async fn get_all_labels(&self) -> StorageResult<Vec<Label>> {
         let mut result: Vec<Label> = Vec::new();
 
         let query = "
@@ -165,7 +203,9 @@ impl StorageTrait for PgDbMemorizStorage {
         order by name;
         ";
 
-        for row in self.db_conn.query(query, &[])? {
+        let client = self.pool.get().await.unwrap();
+
+        for row in client.query(query, &[]).await? {
             let label_item = Label::new(
                 row.get("id"),
                 row.get("name"),
@@ -178,7 +218,7 @@ impl StorageTrait for PgDbMemorizStorage {
         Ok(result)
     }
 
-    fn create_entry(&mut self, mut entry: Entry) -> StorageResult<Entry> {
+    async fn create_entry(&self, mut entry: Entry) -> StorageResult<Entry> {
         entry.created_on = Some(Utc::now());
 
         let query = "
@@ -186,18 +226,22 @@ impl StorageTrait for PgDbMemorizStorage {
         VALUES (DEFAULT,DEFAULT,$1,$2,$3,$4,false,$5,NULL,$6,$7)
         RETURNING id, uuid;";
 
-        let row_inserted = self.db_conn.query(
-            query,
-            &[
-                &entry.title,
-                &entry.content,
-                &entry.data,
-                &entry.color,
-                &entry.created_on,
-                &entry.owner,
-                &entry.board,
-            ],
-        )?;
+        let client = self.pool.get().await.unwrap();
+
+        let row_inserted = client
+            .query(
+                query,
+                &[
+                    &entry.title,
+                    &entry.content,
+                    &entry.data,
+                    &entry.color,
+                    &entry.created_on,
+                    &entry.owner,
+                    &entry.board,
+                ],
+            )
+            .await?;
 
         let row_data = row_inserted.iter().next().unwrap();
         entry.id = row_data.get("id");
@@ -206,40 +250,46 @@ impl StorageTrait for PgDbMemorizStorage {
         Ok(entry)
     }
 
-    fn update_entry(&mut self, mut entry: Entry) -> StorageResult<Entry> {
+    async fn update_entry(&self, mut entry: Entry) -> StorageResult<Entry> {
         entry.updated_on = Some(Utc::now());
 
         let query = "
         UPDATE memoriz.entry SET (title, content, data, color, archived, updated_on, board_) 
         = ($2,$3,$4,$5,$6,$7,$8)
         WHERE ID = $1;";
-        self.db_conn.query(
-            query,
-            &[
-                &entry.id,
-                &entry.title,
-                &entry.content,
-                &entry.data,
-                &entry.color,
-                &entry.archived,
-                &entry.updated_on,
-                &entry.board,
-            ],
-        )?;
+
+        let client = self.pool.get().await.unwrap();
+
+        client
+            .query(
+                query,
+                &[
+                    &entry.id,
+                    &entry.title,
+                    &entry.content,
+                    &entry.data,
+                    &entry.color,
+                    &entry.archived,
+                    &entry.updated_on,
+                    &entry.board,
+                ],
+            )
+            .await?;
 
         //TODO: Manage label
 
         Ok(entry)
     }
 
-    fn delete_entry(&mut self, uuid: uuid::Uuid, owner_uuid: uuid::Uuid) -> StorageResult<()> {
+    async fn delete_entry(&self, uuid: uuid::Uuid, owner_uuid: uuid::Uuid) -> StorageResult<()> {
         let query = "DELETE FROM memoriz.entry WHERE UUID = $1 AND owner_=$2;";
-        self.db_conn.execute(query, &[&uuid, &owner_uuid])?;
+        let client = self.pool.get().await.unwrap();
+        client.execute(query, &[&uuid, &owner_uuid]).await?;
         Ok(())
     }
 
-    fn get_entry(
-        &mut self,
+    async fn get_entry(
+        &self,
         uuid: uuid::Uuid,
         owner_uuid: uuid::Uuid,
     ) -> StorageResult<Option<Entry>> {
@@ -251,7 +301,10 @@ impl StorageTrait for PgDbMemorizStorage {
         where 1=1
         and entry.uuid = $1
         and entry.owner_ = $2;";
-        for row in &self.db_conn.query(query, &[&uuid, &owner_uuid])? {
+
+        let client = self.pool.get().await.unwrap();
+
+        for row in &client.query(query, &[&uuid, &owner_uuid]).await? {
             result = Some(Entry::new(
                 row.get("id"),
                 row.get("uuid"),
@@ -271,7 +324,7 @@ impl StorageTrait for PgDbMemorizStorage {
         Ok(result)
     }
 
-    fn get_all_entries(&self, owner_uuid: uuid::Uuid) -> StorageResult<Vec<Entry>> {
+    async fn get_all_entries(&self, owner_uuid: uuid::Uuid) -> StorageResult<Vec<Entry>> {
         let mut result: Vec<Entry> = Vec::new();
 
         let query = "
@@ -281,7 +334,9 @@ impl StorageTrait for PgDbMemorizStorage {
         and entry.board_ is NULL
         order by entry.updated_on desc;";
 
-        for row in self.db_conn.query(query, &[&owner_uuid]).unwrap() {
+        let client = self.pool.get().await.unwrap();
+
+        for row in client.query(query, &[&owner_uuid]).await? {
             let entry: Entry = Entry::new(
                 row.get("id"),
                 row.get("uuid"),
@@ -303,8 +358,8 @@ impl StorageTrait for PgDbMemorizStorage {
         Ok(result)
     }
 
-    fn get_all_entries_by_board(
-        &mut self,
+    async fn get_all_entries_by_board(
+        &self,
         owner_uuid: uuid::Uuid,
         board_uuid: uuid::Uuid,
     ) -> StorageResult<Vec<Entry>> {
@@ -316,11 +371,9 @@ impl StorageTrait for PgDbMemorizStorage {
         where entry.owner_ = $1 and entry.board_ = $2
         order by entry.updated_on desc;";
 
-        for row in self
-            .db_conn
-            .query(query, &[&owner_uuid, &board_uuid])
-            .unwrap()
-        {
+        let client = self.pool.get().await.unwrap();
+
+        for row in client.query(query, &[&owner_uuid, &board_uuid]).await? {
             let entry: Entry = Entry::new(
                 row.get("id"),
                 row.get("uuid"),
