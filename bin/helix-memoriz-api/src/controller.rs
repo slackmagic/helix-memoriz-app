@@ -2,6 +2,7 @@ use crate::state::AppState;
 use crate::APP_NAME;
 use actix_web::web::Data;
 use actix_web::{web, HttpRequest, HttpResponse};
+use helix_auth_lib::HelixAuth;
 use std::sync::{Arc, Mutex};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -35,3 +36,18 @@ pub fn version(_req: HttpRequest) -> HttpResponse {
 }
 
 //-----------------------------------------------------------------------------------
+
+pub async fn get_all_entries(
+    wrap_state: Data<Arc<Mutex<AppState>>>,
+    req: HttpRequest,
+) -> HttpResponse {
+    let state = wrap_state.lock().unwrap();
+    let domain = state.get_domain();
+    let claimer = HelixAuth::get_claimer(&req).unwrap();
+
+    //TODO: Archived
+    match domain.get_all_entries(claimer.user_uuid, None).await {
+        Err(_) => HttpResponse::InternalServerError().body("Internal Server Error."),
+        Ok(persons) => HttpResponse::Ok().json(persons),
+    }
+}

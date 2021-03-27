@@ -47,7 +47,7 @@ async fn main() -> io::Result<()> {
                 web::scope("/api")
                     .route("/_", web::get().to(healthcheck))
                     .route("/version", web::get().to(version))
-                    .service(web::scope("/memoriz").configure(get_routes_configuration)),
+                    .service(web::scope("/").configure(get_routes_configuration)),
             )
             .service(web::scope("/").configure(get_static_files_configuration))
     })
@@ -68,7 +68,7 @@ fn get_routes_configuration(cfg: &mut web::ServiceConfig) {
         web::scope("")
             .service(
                 web::scope("/entries")
-                    .route("", web::get().to(unimplemented))
+                    .route("", web::get().to(get_all_entries))
                     .route("", web::post().to(unimplemented))
                     .route("", web::put().to(unimplemented))
                     .route("/search", web::get().to(unimplemented))
