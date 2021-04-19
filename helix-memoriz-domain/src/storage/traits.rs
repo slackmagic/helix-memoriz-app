@@ -8,7 +8,7 @@ pub trait StorageTrait: Send + Sync {
     async fn create_board(&self, board: Board) -> StorageResult<Board>;
     async fn get_all_boards(&self, owner_uuid: uuid::Uuid) -> StorageResult<Vec<Board>>;
     async fn update_board(&self, board: Board) -> StorageResult<Board>;
-    async fn delete_board(&self, board: &Board) -> StorageResult<()>;
+    async fn delete_board(&self, owner_uuid: uuid::Uuid, uuid: uuid::Uuid) -> StorageResult<()>;
 
     async fn get_all_labels(&self) -> StorageResult<Vec<Label>>;
     async fn create_label(&self, label: Label) -> StorageResult<Label>;

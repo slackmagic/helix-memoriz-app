@@ -3,7 +3,6 @@ use crate::business::error::MemorizDomainError;
 use crate::business::traits::DomainTrait;
 use crate::core::board::Board;
 use crate::core::entry::Entry;
-use crate::core::label::Label;
 use crate::storage::traits::StorageTrait;
 use async_trait::async_trait;
 use std::boxed::Box;
@@ -82,11 +81,11 @@ impl DomainTrait for MemorizDomain {
 
     async fn search(
         &self,
-        owner_uuid: uuid::Uuid,
-        content: Option<String>,
-        board_uuid: Option<uuid::Uuid>,
-        labels: Option<String>,
-        archived_filter: Option<bool>,
+        _owner_uuid: uuid::Uuid,
+        _content: Option<String>,
+        _board_uuid: Option<uuid::Uuid>,
+        _labels: Option<String>,
+        _archived_filter: Option<bool>,
     ) -> EntryDomainResult<Vec<Entry>> {
         Err(MemorizDomainError::NotImplemented)
     }
@@ -133,7 +132,11 @@ impl DomainTrait for MemorizDomain {
     async fn update_board(&self, board: Board) -> EntryDomainResult<Board> {
         Ok(self.storage.update_board(board).await?)
     }
-    async fn delete_board(&self, board: &Board) -> EntryDomainResult<()> {
-        Ok(self.storage.delete_board(board).await?)
+    async fn delete_board(
+        &self,
+        owner_uuid: uuid::Uuid,
+        uuid: uuid::Uuid,
+    ) -> EntryDomainResult<()> {
+        Ok(self.storage.delete_board(owner_uuid, uuid).await?)
     }
 }

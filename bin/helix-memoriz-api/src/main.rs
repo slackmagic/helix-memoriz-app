@@ -74,7 +74,7 @@ fn get_routes_configuration(cfg: &mut web::ServiceConfig) {
                     .service(
                         web::scope("/{uuid}")
                             .route("", web::get().to(get_entry))
-                            .route("", web::delete().to(unimplemented))
+                            .route("", web::delete().to(delete_entry))
                             .route("/do-archive", web::post().to(archive_entry))
                             .route("/undo-archive", web::post().to(undo_archive_entry)),
                     ),
@@ -87,7 +87,7 @@ fn get_routes_configuration(cfg: &mut web::ServiceConfig) {
                     .service(
                         web::scope("/{uuid}")
                             .route("", web::get().to(get_board))
-                            .route("", web::delete().to(unimplemented)),
+                            .route("", web::delete().to(delete_board)),
                     ),
             )
             .service(

@@ -146,10 +146,10 @@ impl StorageTrait for PgDbMemorizStorage {
         Ok(result)
     }
 
-    async fn delete_board(&self, board: &Board) -> StorageResult<()> {
-        let query = "DELETE FROM memoriz.board WHERE UUID = $1;";
+    async fn delete_board(&self, uuid: uuid::Uuid, owner_uuid: uuid::Uuid) -> StorageResult<()> {
+        let query = "DELETE FROM memoriz.board WHERE UUID = $1 AND owner_=$2;";
         let client = self.pool.get().await.unwrap();
-        &client.execute(query, &[&board.uuid]).await?;
+        &client.execute(query, &[&uuid, &owner_uuid]).await?;
         Ok(())
     }
 

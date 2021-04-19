@@ -1,5 +1,5 @@
 use crate::business::error::EntryDomainResult;
-use crate::core::{board::*, entry::*, label::*};
+use crate::core::{board::*, entry::*};
 use async_trait::async_trait;
 
 #[async_trait]
@@ -49,7 +49,8 @@ pub trait DomainTrait: Send + Sync {
     //-----------------------------------------------
     async fn create_board(&self, board: Board) -> EntryDomainResult<Board>;
     async fn update_board(&self, board: Board) -> EntryDomainResult<Board>;
-    async fn delete_board(&self, board: &Board) -> EntryDomainResult<()>;
+    async fn delete_board(&self, owner_uuid: uuid::Uuid, uuid: uuid::Uuid)
+        -> EntryDomainResult<()>;
     async fn get_board(&self, owner_uuid: uuid::Uuid, uuid: uuid::Uuid)
         -> EntryDomainResult<Board>;
     async fn get_all_boards(&self, owner_uuid: uuid::Uuid) -> EntryDomainResult<Vec<Board>>;
