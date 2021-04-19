@@ -5,7 +5,7 @@ pub mod configuration;
 pub mod controller;
 pub mod state;
 
-use crate::controller::*;
+use crate::controller::{business_controller::*, internal_controller::*};
 use crate::state::AppState;
 use actix_web::{middleware, web, App, HttpServer};
 use helix_auth_lib::middleware::AuthValidator;
