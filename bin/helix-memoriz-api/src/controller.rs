@@ -114,7 +114,7 @@ pub async fn get_entry(wrap_state: Data<Arc<Mutex<AppState>>>, req: HttpRequest)
 
     let uuid: uuid::Uuid = uuid::Uuid::parse_str(req.match_info().get("uuid").unwrap()).unwrap();
 
-    match domain.get_entry(uuid, claimer.user_uuid).await {
+    match domain.get_entry(claimer.user_uuid, uuid).await {
         Err(_) => HttpResponse::InternalServerError().body("Internal Server Error."),
         Ok(entry) => HttpResponse::Ok().json(entry),
     }
@@ -194,5 +194,18 @@ pub async fn get_all_boards(
     match domain.get_all_boards(claimer.user_uuid).await {
         Err(_) => HttpResponse::InternalServerError().body("Internal Server Error."),
         Ok(boards) => HttpResponse::Ok().json(boards),
+    }
+}
+
+pub async fn get_board(wrap_state: Data<Arc<Mutex<AppState>>>, req: HttpRequest) -> HttpResponse {
+    let state = wrap_state.lock().unwrap();
+    let domain = state.get_domain();
+    let claimer = HelixAuth::get_claimer(&req).unwrap();
+
+    let uuid: uuid::Uuid = uuid::Uuid::parse_str(req.match_info().get("uuid").unwrap()).unwrap();
+
+    match domain.get_board(claimer.user_uuid, uuid).await {
+        Err(_) => HttpResponse::InternalServerError().body("Internal Server Error."),
+        Ok(board) => HttpResponse::Ok().json(board),
     }
 }
