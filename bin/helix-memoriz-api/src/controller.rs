@@ -5,7 +5,7 @@ use actix_files::NamedFile;
 use actix_web::{web, web::Data, HttpRequest, HttpResponse, Result};
 use helix_auth_lib::HelixAuth;
 use helix_config_lib::version::Version;
-use helix_memoriz_domain::core::entry::Entry;
+use helix_memoriz_domain::core::{board::Board, entry::Entry};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
@@ -205,6 +205,37 @@ pub async fn get_board(wrap_state: Data<Arc<Mutex<AppState>>>, req: HttpRequest)
     let uuid: uuid::Uuid = uuid::Uuid::parse_str(req.match_info().get("uuid").unwrap()).unwrap();
 
     match domain.get_board(claimer.user_uuid, uuid).await {
+        Err(_) => HttpResponse::InternalServerError().body("Internal Server Error."),
+        Ok(board) => HttpResponse::Ok().json(board),
+    }
+}
+
+pub async fn create_board(
+    wrap_state: Data<Arc<Mutex<AppState>>>,
+    (json, req): (web::Json<Board>, HttpRequest),
+) -> HttpResponse {
+    let state = wrap_state.lock().unwrap();
+    let domain = state.get_domain();
+    let claimer = HelixAuth::get_claimer(&req).unwrap();
+
+    let mut board: Board = json.into_inner();
+    board.owner = Some(claimer.user_uuid);
+
+    match domain.create_board(board).await {
+        Err(_) => HttpResponse::InternalServerError().body("Internal Server Error."),
+        Ok(board) => HttpResponse::Ok().json(board),
+    }
+}
+
+pub async fn update_board(
+    wrap_state: Data<Arc<Mutex<AppState>>>,
+    json: web::Json<Board>,
+) -> HttpResponse {
+    let state = wrap_state.lock().unwrap();
+    let domain = state.get_domain();
+
+    let board: Board = json.into_inner();
+    match domain.update_board(board).await {
         Err(_) => HttpResponse::InternalServerError().body("Internal Server Error."),
         Ok(board) => HttpResponse::Ok().json(board),
     }

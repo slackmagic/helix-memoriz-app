@@ -82,8 +82,8 @@ fn get_routes_configuration(cfg: &mut web::ServiceConfig) {
             .service(
                 web::scope("/boards")
                     .route("", web::get().to(get_all_boards))
-                    .route("", web::post().to(unimplemented))
-                    .route("", web::put().to(unimplemented))
+                    .route("", web::post().to(create_board))
+                    .route("", web::put().to(update_board))
                     .service(
                         web::scope("/{uuid}")
                             .route("", web::get().to(get_board))
