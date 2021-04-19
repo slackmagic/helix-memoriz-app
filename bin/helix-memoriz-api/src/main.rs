@@ -9,7 +9,6 @@ use crate::controller::*;
 use crate::state::AppState;
 use actix_web::{middleware, web, App, HttpServer};
 use helix_auth_lib::middleware::AuthValidator;
-use helix_config_lib::version::Version;
 use helix_config_lib::Configuration as GlobalConfiguration;
 use std::sync::{Arc, Mutex};
 use std::{env, io};
