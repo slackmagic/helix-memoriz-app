@@ -25,8 +25,16 @@ impl DomainTrait for MemorizDomain {
         owner_uuid: uuid::Uuid,
         archived_filter: Option<bool>,
     ) -> EntryDomainResult<Vec<Entry>> {
-        //TODO: Filter on archived
-        Ok(self.storage.get_all_entries(owner_uuid).await?)
+        let entries = self.storage.get_all_entries(owner_uuid).await?;
+        let filtered_entries = match archived_filter {
+            Some(filter) => entries
+                .into_iter()
+                .filter(|entry| entry.archived == filter)
+                .collect(),
+            None => entries,
+        };
+
+        Ok(filtered_entries)
     }
 
     async fn get_all_entries_by_board(
@@ -50,7 +58,7 @@ impl DomainTrait for MemorizDomain {
     }
 
     async fn get_all_boards(&self, owner_uuid: uuid::Uuid) -> EntryDomainResult<Vec<Board>> {
-        Ok(self.get_all_boards(owner_uuid).await?)
+        Ok(self.storage.get_all_boards(owner_uuid).await?)
     }
 
     async fn get_entry(

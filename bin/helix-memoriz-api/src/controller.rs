@@ -2,8 +2,7 @@ use crate::configuration::Configuration;
 use crate::state::AppState;
 use crate::APP_NAME;
 use actix_files::NamedFile;
-use actix_web::web::Data;
-use actix_web::{HttpRequest, HttpResponse, Result};
+use actix_web::{web, web::Data, HttpRequest, HttpResponse, Result};
 use helix_auth_lib::HelixAuth;
 use helix_config_lib::version::Version;
 use std::path::PathBuf;
@@ -51,7 +50,49 @@ pub fn unimplemented(_req: HttpRequest) -> HttpResponse {
 
 //-----------------------------------------------------------------------------------
 
+#[derive(Deserialize)]
+pub struct EntriesFilter {
+    archived: Option<String>,
+}
+
 pub async fn get_all_entries(
+    wrap_state: Data<Arc<Mutex<AppState>>>,
+    req: HttpRequest,
+    filter: web::Query<EntriesFilter>,
+) -> HttpResponse {
+    let state = wrap_state.lock().unwrap();
+    let domain = state.get_domain();
+    let claimer = HelixAuth::get_claimer(&req).unwrap();
+
+    match domain
+        .get_all_entries(
+            claimer.user_uuid,
+            match &filter.archived {
+                Some(filter) => Some(filter.to_string() == "true"),
+                None => None,
+            },
+        )
+        .await
+    {
+        Err(_) => HttpResponse::InternalServerError().body("Internal Server Error."),
+        Ok(entries) => HttpResponse::Ok().json(entries),
+    }
+}
+
+pub async fn get_entry(wrap_state: Data<Arc<Mutex<AppState>>>, req: HttpRequest) -> HttpResponse {
+    let state = wrap_state.lock().unwrap();
+    let domain = state.get_domain();
+    let claimer = HelixAuth::get_claimer(&req).unwrap();
+
+    let uuid: uuid::Uuid = uuid::Uuid::parse_str(req.match_info().get("uuid").unwrap()).unwrap();
+
+    match domain.get_entry(uuid, claimer.user_uuid).await {
+        Err(_) => HttpResponse::InternalServerError().body("Internal Server Error."),
+        Ok(entry) => HttpResponse::Ok().json(entry),
+    }
+}
+
+pub async fn get_all_boards(
     wrap_state: Data<Arc<Mutex<AppState>>>,
     req: HttpRequest,
 ) -> HttpResponse {
@@ -59,9 +100,8 @@ pub async fn get_all_entries(
     let domain = state.get_domain();
     let claimer = HelixAuth::get_claimer(&req).unwrap();
 
-    //TODO: Archived
-    match domain.get_all_entries(claimer.user_uuid, None).await {
+    match domain.get_all_boards(claimer.user_uuid).await {
         Err(_) => HttpResponse::InternalServerError().body("Internal Server Error."),
-        Ok(persons) => HttpResponse::Ok().json(persons),
+        Ok(boards) => HttpResponse::Ok().json(boards),
     }
 }

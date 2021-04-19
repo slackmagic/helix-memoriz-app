@@ -74,7 +74,7 @@ fn get_routes_configuration(cfg: &mut web::ServiceConfig) {
                     .route("/by-label/{id}", web::get().to(unimplemented))
                     .service(
                         web::scope("/{uuid}")
-                            .route("", web::get().to(unimplemented))
+                            .route("", web::get().to(get_entry))
                             .route("", web::delete().to(unimplemented))
                             .route("/do-archive", web::post().to(unimplemented))
                             .route("/undo-archive", web::post().to(unimplemented)),
@@ -82,7 +82,7 @@ fn get_routes_configuration(cfg: &mut web::ServiceConfig) {
             )
             .service(
                 web::scope("/boards")
-                    .route("", web::get().to(unimplemented))
+                    .route("", web::get().to(get_all_boards))
                     .route("", web::post().to(unimplemented))
                     .route("", web::put().to(unimplemented))
                     .service(
@@ -109,14 +109,6 @@ fn get_exception_uri() -> Vec<String> {
     let mut exception_uri = Vec::new();
     exception_uri.push("/api/_".to_string());
     exception_uri.push("/api/version".to_string());
-    exception_uri
-}
 
-pub fn get_crate_version() -> Version {
-    Version::new(
-        env!("CARGO_PKG_VERSION").to_owned(),
-        env!("GIT_HASH").to_owned(),
-        env!("GIT_MESSAGE").to_owned(),
-        env!("GIT_COMMIT_DATE").to_owned(),
-    )
+    exception_uri
 }
