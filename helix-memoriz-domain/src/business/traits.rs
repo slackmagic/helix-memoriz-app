@@ -6,18 +6,23 @@ use async_trait::async_trait;
 pub trait DomainTrait: Send + Sync {
     //ENTRY
     //-----------------------------------------------
-    async fn create_entry(&self, entry: Entry) -> EntryDomainResult<Option<Entry>>;
-    async fn update_entry(&self, entry: Entry) -> EntryDomainResult<Option<Entry>>;
+    async fn create_entry(&self, entry: Entry) -> EntryDomainResult<Entry>;
+    async fn update_entry(&self, entry: Entry) -> EntryDomainResult<Entry>;
     async fn delete_entry(&self, owner_uuid: uuid::Uuid, uuid: uuid::Uuid)
         -> EntryDomainResult<()>;
-    async fn archive_entry(&self, entry: Entry) -> EntryDomainResult<Option<Entry>>;
-    async fn undo_archive_entry(&self, entry: Entry) -> EntryDomainResult<Option<Entry>>;
-
-    async fn get_entry(
+    async fn archive_entry(
         &self,
         owner_uuid: uuid::Uuid,
         uuid: uuid::Uuid,
-    ) -> EntryDomainResult<Option<Entry>>;
+    ) -> EntryDomainResult<Entry>;
+    async fn undo_archive_entry(
+        &self,
+        owner_uuid: uuid::Uuid,
+        uuid: uuid::Uuid,
+    ) -> EntryDomainResult<Entry>;
+
+    async fn get_entry(&self, owner_uuid: uuid::Uuid, uuid: uuid::Uuid)
+        -> EntryDomainResult<Entry>;
 
     async fn get_all_entries(
         &self,
@@ -42,14 +47,11 @@ pub trait DomainTrait: Send + Sync {
 
     // BOARD
     //-----------------------------------------------
-    async fn create_board(&self, board: Board) -> EntryDomainResult<Option<Board>>;
-    async fn update_board(&self, board: Board) -> EntryDomainResult<Option<Board>>;
+    async fn create_board(&self, board: Board) -> EntryDomainResult<Board>;
+    async fn update_board(&self, board: Board) -> EntryDomainResult<Board>;
     async fn delete_board(&self, board: &Board) -> EntryDomainResult<()>;
-    async fn get_board(
-        &self,
-        owner_uuid: uuid::Uuid,
-        uuid: uuid::Uuid,
-    ) -> EntryDomainResult<Option<Board>>;
+    async fn get_board(&self, owner_uuid: uuid::Uuid, uuid: uuid::Uuid)
+        -> EntryDomainResult<Board>;
     async fn get_all_boards(&self, owner_uuid: uuid::Uuid) -> EntryDomainResult<Vec<Board>>;
 
     /*

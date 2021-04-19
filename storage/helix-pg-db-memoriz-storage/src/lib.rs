@@ -90,12 +90,8 @@ impl StorageTrait for PgDbMemorizStorage {
         Ok(board)
     }
 
-    async fn get_board(
-        &self,
-        uuid: uuid::Uuid,
-        owner_uuid: uuid::Uuid,
-    ) -> StorageResult<Option<Board>> {
-        let mut result: Option<Board> = None;
+    async fn get_board(&self, uuid: uuid::Uuid, owner_uuid: uuid::Uuid) -> StorageResult<Board> {
+        let mut result: StorageResult<Board> = Err(StorageError::AnotherError);
 
         let query = "
         select *
@@ -107,7 +103,7 @@ impl StorageTrait for PgDbMemorizStorage {
         let client = self.pool.get().await.unwrap();
 
         for row in &client.query(query, &[&uuid, &owner_uuid]).await? {
-            result = Some(Board::new(
+            result = Ok(Board::new(
                 row.get("uuid"),
                 row.get("title"),
                 row.get("data"),
@@ -118,7 +114,7 @@ impl StorageTrait for PgDbMemorizStorage {
             ));
         }
 
-        Ok(result)
+        result
     }
 
     async fn get_all_boards(&self, owner_uuid: uuid::Uuid) -> StorageResult<Vec<Board>> {
@@ -288,12 +284,8 @@ impl StorageTrait for PgDbMemorizStorage {
         Ok(())
     }
 
-    async fn get_entry(
-        &self,
-        uuid: uuid::Uuid,
-        owner_uuid: uuid::Uuid,
-    ) -> StorageResult<Option<Entry>> {
-        let mut result: Option<Entry> = None;
+    async fn get_entry(&self, uuid: uuid::Uuid, owner_uuid: uuid::Uuid) -> StorageResult<Entry> {
+        let mut result: StorageResult<Entry> = Err(StorageError::AnotherError);
 
         let query = "
         select *
@@ -305,7 +297,7 @@ impl StorageTrait for PgDbMemorizStorage {
         let client = self.pool.get().await.unwrap();
 
         for row in &client.query(query, &[&uuid, &owner_uuid]).await? {
-            result = Some(Entry::new(
+            result = Ok(Entry::new(
                 row.get("id"),
                 row.get("uuid"),
                 row.get("title"),
@@ -321,7 +313,7 @@ impl StorageTrait for PgDbMemorizStorage {
             ));
         }
 
-        Ok(result)
+        result
     }
 
     async fn get_all_entries(&self, owner_uuid: uuid::Uuid) -> StorageResult<Vec<Entry>> {

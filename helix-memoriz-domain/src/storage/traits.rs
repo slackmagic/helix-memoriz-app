@@ -4,11 +4,7 @@ use async_trait::async_trait;
 
 #[async_trait]
 pub trait StorageTrait: Send + Sync {
-    async fn get_board(
-        &self,
-        owner_uuid: uuid::Uuid,
-        uuid: uuid::Uuid,
-    ) -> StorageResult<Option<Board>>;
+    async fn get_board(&self, owner_uuid: uuid::Uuid, uuid: uuid::Uuid) -> StorageResult<Board>;
     async fn create_board(&self, board: Board) -> StorageResult<Board>;
     async fn get_all_boards(&self, owner_uuid: uuid::Uuid) -> StorageResult<Vec<Board>>;
     async fn update_board(&self, board: Board) -> StorageResult<Board>;
@@ -22,11 +18,7 @@ pub trait StorageTrait: Send + Sync {
     async fn create_entry(&self, entry: Entry) -> StorageResult<Entry>;
     async fn update_entry(&self, entry: Entry) -> StorageResult<Entry>;
     async fn delete_entry(&self, owner_uuid: uuid::Uuid, uuid: uuid::Uuid) -> StorageResult<()>;
-    async fn get_entry(
-        &self,
-        owner_uuid: uuid::Uuid,
-        uuid: uuid::Uuid,
-    ) -> StorageResult<Option<Entry>>;
+    async fn get_entry(&self, owner_uuid: uuid::Uuid, uuid: uuid::Uuid) -> StorageResult<Entry>;
 
     async fn get_all_entries(&self, owner_uuid: uuid::Uuid) -> StorageResult<Vec<Entry>>;
 

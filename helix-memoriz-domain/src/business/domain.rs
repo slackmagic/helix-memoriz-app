@@ -43,17 +43,27 @@ impl DomainTrait for MemorizDomain {
         board_uuid: uuid::Uuid,
         archived_filter: Option<bool>,
     ) -> EntryDomainResult<Vec<Entry>> {
-        Ok(self
+        let entries = self
             .storage
             .get_all_entries_by_board(owner_uuid, board_uuid)
-            .await?)
+            .await?;
+
+        let filtered_entries = match archived_filter {
+            Some(filter) => entries
+                .into_iter()
+                .filter(|entry| entry.archived == filter)
+                .collect(),
+            None => entries,
+        };
+
+        Ok(filtered_entries)
     }
 
     async fn get_board(
         &self,
         owner_uuid: uuid::Uuid,
         uuid: uuid::Uuid,
-    ) -> EntryDomainResult<Option<Board>> {
+    ) -> EntryDomainResult<Board> {
         Ok(self.storage.get_board(owner_uuid, uuid).await?)
     }
 
@@ -65,7 +75,7 @@ impl DomainTrait for MemorizDomain {
         &self,
         owner_uuid: uuid::Uuid,
         uuid: uuid::Uuid,
-    ) -> EntryDomainResult<Option<Entry>> {
+    ) -> EntryDomainResult<Entry> {
         Ok(self.storage.get_entry(owner_uuid, uuid).await?)
     }
 
@@ -80,12 +90,12 @@ impl DomainTrait for MemorizDomain {
         Err(MemorizDomainError::NotImplemented)
     }
 
-    async fn create_entry(&self, entry: Entry) -> EntryDomainResult<Option<Entry>> {
-        Ok(self.create_entry(entry).await?)
+    async fn create_entry(&self, entry: Entry) -> EntryDomainResult<Entry> {
+        Ok(self.storage.create_entry(entry).await?)
     }
 
-    async fn update_entry(&self, entry: Entry) -> EntryDomainResult<Option<Entry>> {
-        Ok(self.update_entry(entry).await?)
+    async fn update_entry(&self, entry: Entry) -> EntryDomainResult<Entry> {
+        Ok(self.storage.update_entry(entry).await?)
     }
 
     async fn delete_entry(
@@ -93,24 +103,36 @@ impl DomainTrait for MemorizDomain {
         owner_uuid: uuid::Uuid,
         uuid: uuid::Uuid,
     ) -> EntryDomainResult<()> {
-        Ok(self.delete_entry(owner_uuid, uuid).await?)
+        Ok(self.storage.delete_entry(owner_uuid, uuid).await?)
     }
 
-    async fn archive_entry(&self, entry: Entry) -> EntryDomainResult<Option<Entry>> {
-        Ok(self.archive_entry(entry).await?)
+    async fn archive_entry(
+        &self,
+        owner_uuid: uuid::Uuid,
+        uuid: uuid::Uuid,
+    ) -> EntryDomainResult<Entry> {
+        let mut entry = self.get_entry(owner_uuid, uuid).await?;
+        entry.archived = true;
+        Ok(self.storage.update_entry(entry).await?)
     }
 
-    async fn undo_archive_entry(&self, entry: Entry) -> EntryDomainResult<Option<Entry>> {
-        Ok(self.undo_archive_entry(entry).await?)
+    async fn undo_archive_entry(
+        &self,
+        owner_uuid: uuid::Uuid,
+        uuid: uuid::Uuid,
+    ) -> EntryDomainResult<Entry> {
+        let mut entry = self.get_entry(owner_uuid, uuid).await?;
+        entry.archived = false;
+        Ok(self.storage.update_entry(entry).await?)
     }
 
-    async fn create_board(&self, board: Board) -> EntryDomainResult<Option<Board>> {
-        Ok(self.create_board(board).await?)
+    async fn create_board(&self, board: Board) -> EntryDomainResult<Board> {
+        Ok(self.storage.create_board(board).await?)
     }
-    async fn update_board(&self, board: Board) -> EntryDomainResult<Option<Board>> {
-        Ok(self.update_board(board).await?)
+    async fn update_board(&self, board: Board) -> EntryDomainResult<Board> {
+        Ok(self.storage.update_board(board).await?)
     }
     async fn delete_board(&self, board: &Board) -> EntryDomainResult<()> {
-        Ok(self.delete_board(board).await?)
+        Ok(self.storage.delete_board(board).await?)
     }
 }

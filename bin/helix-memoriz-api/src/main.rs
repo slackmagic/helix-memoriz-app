@@ -67,17 +67,17 @@ fn get_routes_configuration(cfg: &mut web::ServiceConfig) {
             .service(
                 web::scope("/entries")
                     .route("", web::get().to(get_all_entries))
-                    .route("", web::post().to(unimplemented))
-                    .route("", web::put().to(unimplemented))
+                    .route("", web::post().to(create_entry))
+                    .route("", web::put().to(update_entry))
                     .route("/search", web::get().to(unimplemented))
-                    .route("/by-board/{uuid}", web::get().to(unimplemented))
+                    .route("/by-board/{uuid}", web::get().to(get_all_entries_by_board))
                     .route("/by-label/{id}", web::get().to(unimplemented))
                     .service(
                         web::scope("/{uuid}")
                             .route("", web::get().to(get_entry))
                             .route("", web::delete().to(unimplemented))
-                            .route("/do-archive", web::post().to(unimplemented))
-                            .route("/undo-archive", web::post().to(unimplemented)),
+                            .route("/do-archive", web::post().to(archive_entry))
+                            .route("/undo-archive", web::post().to(undo_archive_entry)),
                     ),
             )
             .service(
