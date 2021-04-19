@@ -64,6 +64,7 @@ impl DomainTrait for MemorizDomain {
         owner_uuid: uuid::Uuid,
         uuid: uuid::Uuid,
     ) -> EntryDomainResult<Board> {
+        println!("BOARD {:?}", uuid);
         Ok(self.storage.get_board(owner_uuid, uuid).await?)
     }
 
