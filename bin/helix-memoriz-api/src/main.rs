@@ -7,7 +7,6 @@ pub mod state;
 
 use crate::controller::*;
 use crate::state::AppState;
-use actix_files as fs;
 use actix_web::{middleware, web, App, HttpServer};
 use helix_auth_lib::middleware::AuthValidator;
 use helix_config_lib::version::Version;
@@ -46,7 +45,6 @@ async fn main() -> io::Result<()> {
             .service(
                 web::scope("/api")
                     .route("/_", web::get().to(healthcheck))
-                    .route("/version", web::get().to(version))
                     .service(web::scope("/").configure(get_routes_configuration)),
             )
             .service(web::scope("").route("/{filename:.*}", web::get().to(serve_static_file)))
