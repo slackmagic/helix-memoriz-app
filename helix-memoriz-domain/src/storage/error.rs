@@ -31,5 +31,12 @@ pub enum StorageError {
     },
 }
 
-//Define a generic error type to simplify return.
+//Define the possible errors
+#[derive(Error, Debug)]
+pub enum IndexError {
+    #[error("NotImplemented")]
+    NotImplemented,
+}
+
 pub type StorageResult<T> = std::result::Result<T, StorageError>;
+pub type IndexResult<T> = std::result::Result<T, IndexError>;

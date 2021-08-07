@@ -28,3 +28,8 @@ pub trait StorageTrait: Send + Sync {
         board_uuid: uuid::Uuid,
     ) -> StorageResult<Vec<Entry>>;
 }
+
+#[async_trait]
+pub trait IndexTrait: Send + Sync {
+    async fn index_board(&self, owner_uuid: uuid::Uuid, uuid: uuid::Uuid) -> StorageResult<Board>;
+}
