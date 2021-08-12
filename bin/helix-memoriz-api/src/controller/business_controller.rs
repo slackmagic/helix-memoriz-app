@@ -9,6 +9,29 @@ pub struct EntriesFilter {
     archived: Option<String>,
 }
 
+#[derive(Deserialize)]
+pub struct SearchParameters {
+    q: String,
+}
+
+pub async fn search_entries(
+    wrap_state: Data<Arc<Mutex<AppState>>>,
+    req: HttpRequest,
+    search_parameters: web::Query<SearchParameters>,
+) -> HttpResponse {
+    let state = wrap_state.lock().unwrap();
+    let domain = state.get_domain();
+    let claimer = HelixAuth::get_claimer(&req).unwrap();
+
+    match domain
+        .search(claimer.user_uuid, search_parameters.q.to_string())
+        .await
+    {
+        Err(_) => HttpResponse::InternalServerError().body("Internal Server Error."),
+        Ok(entries) => HttpResponse::Ok().json(entries),
+    }
+}
+
 pub async fn get_all_entries(
     wrap_state: Data<Arc<Mutex<AppState>>>,
     req: HttpRequest,

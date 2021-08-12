@@ -1,7 +1,8 @@
 use crate::configuration::Configuration;
 use helix_memoriz_domain::business::domain::MemorizDomain;
 use helix_memoriz_domain::business::traits::DomainTrait;
-use helix_pg_db_memoriz_storage::PgDbMemorizStorage;
+use meilisearch_search_engine::MsMemorizSearchEngine;
+use pg_db_storage::PgDbMemorizStorage;
 use std::boxed::Box;
 
 pub struct AppState {
@@ -11,7 +12,10 @@ pub struct AppState {
 impl AppState {
     pub fn new() -> Self {
         AppState {
-            memoriz_domain: Box::new(MemorizDomain::new(AppState::get_pg_storage())),
+            memoriz_domain: Box::new(MemorizDomain::new(
+                AppState::get_pg_storage(),
+                AppState::get_ms_search_engine(),
+            )),
         }
     }
 
@@ -27,6 +31,18 @@ impl AppState {
                 Configuration::get_database_port(),
                 Configuration::get_database_user(),
                 Configuration::get_database_password(),
+            )
+            .unwrap(),
+        )
+    }
+
+    fn get_ms_search_engine() -> Box<MsMemorizSearchEngine> {
+        Box::new(
+            MsMemorizSearchEngine::new(
+                Configuration::get_search_index(),
+                Configuration::get_search_host(),
+                Configuration::get_search_port(),
+                Configuration::get_search_token(),
             )
             .unwrap(),
         )

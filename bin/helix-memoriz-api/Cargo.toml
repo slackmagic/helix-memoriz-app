@@ -30,9 +30,11 @@ chrono = { version = "^0.4", features = ["serde"] }
 
 ##DOMAIN
 helix-memoriz-domain = { path = "../../helix-memoriz-domain" }
-helix-pg-db-memoriz-storage = {path = "../../storage/helix-pg-db-memoriz-storage"}
+pg-db-storage = {path = "../../storage/pg-db-storage"}
+meilisearch-search-engine = {path = "../../storage/meilisearch-search-engine"}
 helix-auth-lib = {git = "https://github.com/slackmagic/helix-shared-lib", branch = "master"}
 helix-config-lib = {git = "https://github.com/slackmagic/helix-shared-lib", branch = "master"}
+
 
 [build-dependencies]
 ##VERSION

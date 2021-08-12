@@ -29,4 +29,23 @@ impl Configuration {
     pub fn get_static_folder() -> String {
         env::var("HELIX_STATIC_FOLDER").expect("HELIX_STATIC_FOLDER not found.")
     }
+
+    pub fn get_search_port() -> u16 {
+        env::var("HELIX_SEARCH_PORT")
+            .expect("HELIX_SEARCH_PORT not found.")
+            .parse()
+            .unwrap()
+    }
+
+    pub fn get_search_index() -> String {
+        env::var("HELIX_SEARCH_INDEX").expect("HELIX_SEARCH_INDEX not found.")
+    }
+
+    pub fn get_search_host() -> String {
+        env::var("HELIX_SEARCH_HOST").expect("HELIX_SEARCH_HOST not found.")
+    }
+
+    pub fn get_search_token() -> String {
+        env::var("HELIX_SEARCH_TOKEN").expect("HELIX_SEARCH_TOKEN not found.")
+    }
 }

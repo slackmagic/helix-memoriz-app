@@ -36,14 +36,7 @@ pub trait DomainTrait: Send + Sync {
         archived_filter: Option<bool>,
     ) -> EntryDomainResult<Vec<Entry>>;
 
-    async fn search(
-        &self,
-        owner_uuid: uuid::Uuid,
-        content: Option<String>,
-        board_uuid: Option<uuid::Uuid>,
-        labels: Option<String>,
-        archived_filter: Option<bool>,
-    ) -> EntryDomainResult<Vec<Entry>>;
+    async fn search(&self, owner_uuid: uuid::Uuid, query: String) -> EntryDomainResult<Vec<Entry>>;
 
     // BOARD
     //-----------------------------------------------

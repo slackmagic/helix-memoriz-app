@@ -2,8 +2,9 @@
 members = [
     "bin/helix-memoriz-api",
     "helix-memoriz-domain",
-    "storage/helix-pg-db-memoriz-storage",
-    "storage/sled-db-storage"
+    "storage/pg-db-storage",
+    "storage/sled-db-storage",
+    "storage/meilisearch-search-engine"
 ]
 
 ##DEFAULT RUNNING BIN

@@ -3,17 +3,21 @@ use crate::business::error::MemorizDomainError;
 use crate::business::traits::DomainTrait;
 use crate::core::board::Board;
 use crate::core::entry::Entry;
-use crate::storage::traits::StorageTrait;
+use crate::storage::traits::{SearchEngineTrait, StorageTrait};
 use async_trait::async_trait;
 use std::boxed::Box;
 
 pub struct MemorizDomain {
     storage: Box<dyn StorageTrait>,
+    search_engine: Box<dyn SearchEngineTrait>,
 }
 
 impl MemorizDomain {
-    pub fn new(storage: Box<dyn StorageTrait>) -> Self {
-        MemorizDomain { storage }
+    pub fn new(storage: Box<dyn StorageTrait>, search_engine: Box<dyn SearchEngineTrait>) -> Self {
+        MemorizDomain {
+            storage,
+            search_engine,
+        }
     }
 }
 
@@ -79,15 +83,17 @@ impl DomainTrait for MemorizDomain {
         Ok(self.storage.get_entry(owner_uuid, uuid).await?)
     }
 
-    async fn search(
-        &self,
-        _owner_uuid: uuid::Uuid,
-        _content: Option<String>,
-        _board_uuid: Option<uuid::Uuid>,
-        _labels: Option<String>,
-        _archived_filter: Option<bool>,
-    ) -> EntryDomainResult<Vec<Entry>> {
-        Err(MemorizDomainError::NotImplemented)
+    async fn search(&self, owner_uuid: uuid::Uuid, query: String) -> EntryDomainResult<Vec<Entry>> {
+        let entries_id = self
+            .search_engine
+            .search_entries(owner_uuid, query)
+            .await
+            .unwrap();
+
+        Ok(self
+            .storage
+            .get_entries_by_ids(owner_uuid, entries_id)
+            .await?)
     }
 
     async fn create_entry(&self, entry: Entry) -> EntryDomainResult<Entry> {
