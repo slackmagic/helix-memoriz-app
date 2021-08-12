@@ -1,5 +1,5 @@
 [package]
-name = "helix-pg-db-memoriz-storage"
+name = "pg-db-storage"
 version = "0.1.0"
 authors = ["SlackMagiC <laurent.pietrzyk@gmail.com>"]
 edition = "2018"

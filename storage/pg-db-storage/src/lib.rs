@@ -386,4 +386,41 @@ impl StorageTrait for PgDbMemorizStorage {
 
         Ok(result)
     }
+
+    async fn get_entries_by_ids(
+        &self,
+        owner_uuid: uuid::Uuid,
+        ids: Vec<uuid::Uuid>,
+    ) -> StorageResult<Vec<Entry>> {
+        let mut result: Vec<Entry> = Vec::new();
+        let query = "
+        select *
+        from memoriz.entry
+        where 1=1
+        and entry.uuid = any($1)
+        and entry.owner_ = $2
+        order by entry.updated_on desc;";
+
+        let client = self.pool.get().await.unwrap();
+        for row in client.query(query, &[&ids, &owner_uuid]).await? {
+            let entry: Entry = Entry::new(
+                row.get("id"),
+                row.get("uuid"),
+                row.get("title"),
+                row.get("content"),
+                row.get("data"),
+                row.get("color"),
+                row.get("archived"),
+                row.get("created_on"),
+                row.get("updated_on"),
+                row.get("owner_"),
+                None,
+                row.get("board_"),
+            );
+
+            result.push(entry);
+        }
+
+        Ok(result)
+    }
 }
