@@ -22,6 +22,12 @@ pub trait StorageTrait: Send + Sync {
 
     async fn get_all_entries(&self, owner_uuid: uuid::Uuid) -> StorageResult<Vec<Entry>>;
 
+    async fn get_entries_by_ids(
+        &self,
+        owner_uuid: uuid::Uuid,
+        ids: Vec<uuid::Uuid>,
+    ) -> StorageResult<Vec<Entry>>;
+
     async fn get_all_entries_by_board(
         &self,
         owner_uuid: uuid::Uuid,
@@ -30,6 +36,11 @@ pub trait StorageTrait: Send + Sync {
 }
 
 #[async_trait]
-pub trait IndexTrait: Send + Sync {
-    async fn index_board(&self, owner_uuid: uuid::Uuid, uuid: uuid::Uuid) -> StorageResult<Board>;
+pub trait SearchEngineTrait: Send + Sync {
+    async fn index_entry(&self, entry: &Entry) -> SearchEngineResult<()>;
+    async fn search_entries(
+        &self,
+        owner_uuid: uuid::Uuid,
+        query: String,
+    ) -> SearchEngineResult<Vec<uuid::Uuid>>;
 }

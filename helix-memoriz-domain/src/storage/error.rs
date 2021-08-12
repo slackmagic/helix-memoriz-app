@@ -33,10 +33,15 @@ pub enum StorageError {
 
 //Define the possible errors
 #[derive(Error, Debug)]
-pub enum IndexError {
+pub enum SearchEngineError {
     #[error("NotImplemented")]
     NotImplemented,
+    #[error("Meilisearch error: {source}")]
+    Sled {
+        #[from]
+        source: meilisearch_sdk::errors::Error,
+    },
 }
 
 pub type StorageResult<T> = std::result::Result<T, StorageError>;
-pub type IndexResult<T> = std::result::Result<T, IndexError>;
+pub type SearchEngineResult<T> = std::result::Result<T, SearchEngineError>;
